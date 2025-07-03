@@ -1,59 +1,55 @@
-import os
 import logging
+import os
+from aiohttp import web
 from dotenv import load_dotenv
 
-from aiohttp import web
-from aiogram import Bot, Dispatcher
-from aiogram.enums.parse_mode import ParseMode
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-
-from app.bot import register_routers
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from app.config import settings
 from app.storage.db import init_db
+from app.handlers import start, voice, complete
 
 load_dotenv()
-
-# Вебхук: путь и публичный URL
-WEBHOOK_PATH = f"/webhook/{settings.BOT_TOKEN}"
-WEBHOOK_URL = f"{settings.BASE_WEBHOOK_URL}{WEBHOOK_PATH}"
-
-# Логирование
 logging.basicConfig(level=logging.INFO)
 
-async def on_startup(app: web.Application):
-    bot: Bot = app["bot"]
-    logging.info(f"📡 Setting webhook to: {WEBHOOK_URL}")
-    await bot.set_webhook(WEBHOOK_URL)
+bot = Bot(token=settings.BOT_TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
-    logging.info("🗃 Initializing SQLite...")
-    await init_db(settings.DATABASE_PATH)
-    logging.info("✅ DB ready.")
+# Регистрируем хендлеры (ручной стиль aiogram 2.x)
+start.register(dp)
+voice.register(dp)
+complete.register(dp)
 
-async def on_shutdown(app: web.Application):
-    bot: Bot = app["bot"]
-    logging.info("❌ Removing webhook...")
-    await bot.delete_webhook()
+# 📡 Aiohttp webhook handler
+async def handle_webhook(request):
+    try:
+        data = await request.json()
+        update = types.Update.to_object(data)
+        await dp.process_update(update)
+    except Exception as e:
+        logging.exception("Webhook handling failed.")
+    return web.Response()
 
-def create_app() -> web.Application:
-    # Инициализация бота и диспетчера
-    bot = Bot(token=settings.BOT_TOKEN, parse_mode=ParseMode.HTML)
-    dp = Dispatcher()
-    register_routers(dp)
-
-    # HTTP-приложение
+# 📦 Приложение aiohttp
+def create_app():
     app = web.Application()
-    app["bot"] = bot
+    app.router.add_post(f'/webhook/{settings.BOT_TOKEN}', handle_webhook)
 
-    # Регистрируем webhook endpoint
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    async def on_startup(app):
+        await init_db(settings.DATABASE_PATH)
+        await bot.set_webhook(f"{settings.BASE_WEBHOOK_URL}/webhook/{settings.BOT_TOKEN}")
+        logging.info("✅ Webhook set.")
 
-    # Хуки запуска и остановки
+    async def on_shutdown(app):
+        await bot.delete_webhook()
+        logging.info("🔌 Webhook deleted.")
+
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
-
     return app
 
-if __name__ == "__main__":
-    # Render слушает порт через переменную окружения $PORT
+# 🔧 Запуск на Render (PORT будет задан в env)
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
-    web.run_app(create_app(), host="0.0.0.0", port=port)
+    web.run_app(create_app(), host='0.0.0.0', port=port)
