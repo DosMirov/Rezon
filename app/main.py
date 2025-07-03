@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -20,7 +21,6 @@ async def on_startup(app):
     if info.url:
         logging.info(f"Deleting old webhook: {info.url}")
         await bot.delete_webhook(drop_pending_updates=True)
-
     await bot.set_webhook(url=WEBHOOK_URL)
     await init_db(settings.DATABASE_PATH)
     logging.info(f"Webhook set to: {WEBHOOK_URL}")
@@ -36,14 +36,15 @@ def register_handlers():
 
 async def handle_webhook(request):
     request_body = await request.text()
-    update = types.Update.de_json(request_body)
+    data = json.loads(request_body)
+    update = types.Update(**data)
     await dp.process_update(update)
     return web.Response(text="OK")
 
 def create_app():
     register_handlers()
     app = web.Application()
-    app.router.add_post(WEBHOOK_PATH, handle_webhook)  # FIX: use a function, not dp.router
+    app.router.add_post(WEBHOOK_PATH, handle_webhook)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
     return app
@@ -51,3 +52,4 @@ def create_app():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     web.run_app(create_app(), host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
