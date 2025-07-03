@@ -34,12 +34,12 @@ async def on_shutdown(app):
     await bot.delete_webhook()
 
 async def handle_webhook(request):
-    request_body = await request.text()
     try:
-        update = types.Update.de_json(request_body)
+        request_body = await request.text()
+        update = types.Update(**json.loads(request_body))
         await dp.process_update(update)
     except Exception as e:
-        logging.exception("Error in webhook handler: %s", e)
+        logging.error(f"Error in webhook handler: {e}", exc_info=True)
     return web.Response(text="OK")
 
 def create_app():
