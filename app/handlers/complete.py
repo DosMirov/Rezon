@@ -1,11 +1,7 @@
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram import types, Dispatcher
 from app.storage.repository import get_active_session, complete_session
 
-router = Router()
-
-@router.message(F.text == "/done")
-async def handle_done_command(message: Message):
+async def handle_done_command(message: types.Message):
     user_id = message.from_user.id
     session = await get_active_session(user_id)
 
@@ -16,8 +12,7 @@ async def handle_done_command(message: Message):
     await complete_session(user_id)
     await message.answer("✅ Кейс зафиксирован. Спасибо за доверие.")
 
-@router.callback_query(F.data == "complete_session")
-async def handle_done_button(callback: CallbackQuery):
+async def handle_done_button(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     session = await get_active_session(user_id)
 
@@ -28,3 +23,7 @@ async def handle_done_button(callback: CallbackQuery):
     await complete_session(user_id)
     await callback.message.edit_text("✅ Кейс зафиксирован. Спасибо за доверие.")
     await callback.answer()
+
+def register(dp: Dispatcher):
+    dp.register_message_handler(handle_done_command, commands=["done"])
+    dp.register_callback_query_handler(handle_done_button, lambda c: c.data == "complete_session")
