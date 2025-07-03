@@ -24,7 +24,7 @@ async def on_startup(app):
     info = await bot.get_webhook_info()
     if info.url:
         logging.info(f"Deleting old webhook: {info.url}")
-        await bot.delete_webhook(drop_pending_updates=True)
+    #   await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(url=WEBHOOK_URL)
     await init_db(settings.DATABASE_PATH)
     logging.info(f"Webhook set to: {WEBHOOK_URL}")
