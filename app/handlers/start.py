@@ -6,6 +6,7 @@ from app.storage.repository import get_active_session, create_session
 from app.utils.time import get_daystamp
 
 async def handle_start(message: types.Message):
+    print("handle_start TRIGGERED")  # LOG
     user_id = message.from_user.id
     username = message.from_user.username or "-"
     first_name = message.from_user.first_name or "-"
@@ -36,4 +37,5 @@ async def handle_start(message: types.Message):
     await message.answer(text, reply_markup=kb, parse_mode="HTML")
 
 def register(dp: Dispatcher):
+    print("start.py dp id:", id(dp))  # LOG
     dp.register_message_handler(handle_start, commands=["start"])

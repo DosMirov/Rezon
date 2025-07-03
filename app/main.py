@@ -1,6 +1,5 @@
 import logging
 import os
-import json
 from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -15,6 +14,11 @@ WEBHOOK_URL = f"{settings.WEBHOOK_URL}{WEBHOOK_PATH}"
 bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+def register_handlers():
+    print("Registering handlers...")  # LOG
+    start.register(dp)
+    voice.register(dp)
+    complete.register(dp)
 
 async def on_startup(app):
     info = await bot.get_webhook_info()
@@ -29,20 +33,18 @@ async def on_shutdown(app):
     logging.warning("Shutting down. Removing webhook.")
     await bot.delete_webhook()
 
-def register_handlers():
-    start.register(dp)
-    voice.register(dp)
-    complete.register(dp)
-
 async def handle_webhook(request):
     request_body = await request.text()
-    data = json.loads(request_body)
-    update = types.Update(**data)
-    await dp.process_update(update)
+    try:
+        update = types.Update.de_json(request_body)
+        await dp.process_update(update)
+    except Exception as e:
+        logging.exception("Error in webhook handler: %s", e)
     return web.Response(text="OK")
 
 def create_app():
     register_handlers()
+    print("main.py dp id:", id(dp))  # LOG
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
     app.on_startup.append(on_startup)
@@ -52,4 +54,3 @@ def create_app():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     web.run_app(create_app(), host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
