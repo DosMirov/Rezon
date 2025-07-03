@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -36,11 +37,13 @@ async def on_shutdown(app):
 async def handle_webhook(request):
     try:
         request_body = await request.text()
-        update = types.Update(**json.loads(request_body))
+        data = json.loads(request_body)
+        update = types.Update(**data)
         await dp.process_update(update)
     except Exception as e:
-        logging.error(f"Error in webhook handler: {e}", exc_info=True)
+        logging.error(f"Error in webhook handler: {e}")
     return web.Response(text="OK")
+
 
 def create_app():
     register_handlers()
