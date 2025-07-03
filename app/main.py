@@ -22,7 +22,7 @@ async def on_startup(app):
         await bot.delete_webhook(drop_pending_updates=True)
 
     await bot.set_webhook(url=WEBHOOK_URL)
-    await init_db()
+    await init_db(settings.DATABASE_PATH)
     logging.info(f"Webhook set to: {WEBHOOK_URL}")
 
 async def on_shutdown(app):
