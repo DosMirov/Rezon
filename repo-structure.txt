@@ -1,0 +1,32 @@
+.
+├── .env
+├── .gitignore
+├── app
+│   ├── bot.py
+│   ├── config.py
+│   ├── core
+│   │   ├── __init__.py
+│   │   ├── brief_manager.py
+│   │   └── session.py
+│   ├── handlers
+│   │   ├── __init__.py
+│   │   ├── complete.py
+│   │   ├── start.py
+│   │   └── voice.py
+│   ├── main.py
+│   ├── services
+│   │   ├── __init__.py
+│   │   └── send_to_channel.py
+│   ├── storage
+│   │   ├── __init__.py
+│   │   ├── db.py
+│   │   └── repository.py
+│   ├── utils
+│   │   └── time.py
+│   └── webhook.py
+├── README.md
+├── repo-structure.txt
+├── requirements.txt
+└── runtime.txt
+
+7 directories, 23 files
