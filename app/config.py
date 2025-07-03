@@ -1,11 +1,13 @@
-import os
-from dotenv import load_dotenv
+from pydantic import BaseSettings
 
-load_dotenv()
 
-class Settings:
-    BOT_TOKEN: str = os.getenv("BOT_TOKEN")
-    CHANNEL_ID: int = int(os.getenv("CHANNEL_ID"))
-    DATABASE_PATH: str = os.getenv("DATABASE_PATH", "./rezon.db")
+class Settings(BaseSettings):
+    BOT_TOKEN: str
+    WEBHOOK_URL: str = ""  # можно задать пустую строку как fallback
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
 
 settings = Settings()
