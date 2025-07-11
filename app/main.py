@@ -1,91 +1,85 @@
 import logging
 import os
-import json
+import asyncio
+
 from aiohttp import web
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.utils.exceptions import RetryAfter
+from dotenv import load_dotenv
 
+from app.start import register_handlers
 from app.config import settings
-from app.handlers import start, voice, complete
-from app.storage.db import init_db
+from app.core.database import init_db
 
-WEBHOOK_PATH = f"/webhook/{settings.BOT_TOKEN}"
-WEBHOOK_URL = f"{settings.WEBHOOK_URL}{WEBHOOK_PATH}"
+load_dotenv()
 
+# --- Logging ---
+logging.basicConfig(level=logging.INFO)
+
+# --- Init ---
 bot = Bot(token=settings.BOT_TOKEN)
-dp = Dispatcher(bot, storage=MemoryStorage())
+dp = Dispatcher(bot)
+WEBHOOK_URL = f"{settings.WEBHOOK_BASE}/{settings.BOT_TOKEN}"
 
-def register_handlers():
-    logging.info("Registering handlers...")
-    start.register(dp)
-    voice.register(dp)
-    complete.register(dp)
 
-async def on_startup(app):
+async def on_startup(app: web.Application):
     logging.info("Running on_startup...")
 
-    # set_current - без await
+    # Set current context
     Bot.set_current(bot)
     Dispatcher.set_current(dp)
 
     await init_db(settings.DATABASE_PATH)
 
-    await bot.set_webhook(WEBHOOK_URL)
-    logging.info(f"Webhook set to: {WEBHOOK_URL}")
-
-    info = await bot.get_webhook_info()
-    logging.info(f"Webhook info: pending updates = {info.pending_update_count}")
-
-    # Always reset webhook
     try:
-        info = await bot.get_webhook_info()
-        if info.url:
-            logging.info(f"Deleting old webhook: {info.url}")
-            await bot.delete_webhook(drop_pending_updates=True)
+        current = await bot.get_webhook_info()
+        if current.url != WEBHOOK_URL:
+            logging.info(f"Current webhook: {current.url} → updating to {WEBHOOK_URL}")
+            await bot.set_webhook(WEBHOOK_URL)
+        else:
+            logging.info("Webhook is already set correctly. Skipping.")
+    except RetryAfter as e:
+        logging.warning(f"Flood control triggered. Retry after {e.timeout} seconds.")
+        await asyncio.sleep(e.timeout)
+        try:
+            await bot.set_webhook(WEBHOOK_URL)
+            logging.info(f"Webhook set after retry.")
+        except Exception as inner_e:
+            logging.error(f"Retry failed: {inner_e}")
     except Exception as e:
-        logging.warning(f"Webhook info fetch/delete failed: {e}")
+        logging.error(f"Webhook setup error: {e}")
 
-    await bot.set_webhook(WEBHOOK_URL)
-    await init_db(settings.DATABASE_PATH)
-    logging.info(f"Webhook set to: {WEBHOOK_URL}")
 
-async def on_shutdown(app):
-    logging.warning("Shutting down. Removing webhook.")
-    await bot.delete_webhook()
-
-async def handle_webhook(request):
+async def handle_webhook(request: web.Request):
     try:
-        request_body = await request.text()
-        data = json.loads(request_body)
-        update = types.Update(**data)
-
-        Bot.set_current(bot)
+        body = await request.read()
+        update = types.Update(**types.json.loads(body.decode("utf-8")))
         await dp.process_update(update)
-
     except Exception as e:
         logging.error(f"Error in webhook handler: {e}")
+    return web.Response(status=200)
 
-    return web.Response(text="OK")
 
-async def healthcheck(request):
-    return web.Response(text="pong")
+async def on_shutdown(app: web.Application):
+    logging.info("Shutting down...")
 
-async def wakeup(request):
-    return web.Response(text="✅ I'm awake", status=200)
 
-def create_app():
-    register_handlers()
-    logging.info(f"main.py dp id: {id(dp)}")
-
+def create_app() -> web.Application:
     app = web.Application()
-    app.router.add_post(WEBHOOK_PATH, handle_webhook)
-    app.router.add_get("/", healthcheck)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/wake", wakeup)
+
+    app.router.add_post(f"/webhook/{settings.BOT_TOKEN}", handle_webhook)
+
+    register_handlers(dp)
+    logging.info(f"main.py dp id: {id(dp)}")
 
     return app
 
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    web.run_app(create_app(), host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    web.run_app(
+        create_app(),
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000))
+    )
