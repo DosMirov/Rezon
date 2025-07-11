@@ -1,17 +1,21 @@
-from aiogram import types, Dispatcher
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Router, F
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from app.core.brief_manager import get_or_create_brief
 from app.storage.repository import get_active_session, create_session
 from app.utils.time import get_daystamp
 
-async def handle_start(message: types.Message):
+router = Router()
+
+
+@router.message(F.text, F.text.startswith("/start"))
+async def handle_start(message: Message):
     print("handle_start TRIGGERED")  # LOG
+
     user_id = message.from_user.id
     username = message.from_user.username or "-"
     first_name = message.from_user.first_name or "-"
 
-    # Проверяем сессию
     session = await get_active_session(user_id)
     if session:
         brief_id = session["brief_id"]
@@ -35,7 +39,3 @@ async def handle_start(message: types.Message):
     ])
 
     await message.answer(text, reply_markup=kb, parse_mode="HTML")
-
-def register(dp: Dispatcher):
-    print("start.py dp id:", id(dp))  # LOG
-    dp.register_message_handler(handle_start, commands=["start"])

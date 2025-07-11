@@ -1,14 +1,6 @@
-from aiogram import Dispatcher
-from aiogram import Router
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+from app.config import settings
 
-from app.handlers import start, voice, complete
-
-def register_routers(dp: Dispatcher):
-    main_router = Router()
-    
-    # Регистрируем все хендлеры
-    main_router.include_router(start.router)
-    main_router.include_router(voice.router)
-    main_router.include_router(complete.router)
-
-    dp.include_router(main_router)
+bot = Bot(token=settings.BOT_TOKEN, parse_mode="HTML")
+dp = Dispatcher(storage=MemoryStorage())

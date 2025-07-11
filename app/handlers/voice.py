@@ -1,4 +1,7 @@
-from aiogram import types, Dispatcher
+# app/handlers/voice.py
+
+from aiogram import Router, F
+from aiogram.types import Message, ContentType
 
 from app.storage.repository import (
     get_active_session,
@@ -8,7 +11,10 @@ from app.storage.repository import (
 from app.services.send_to_channel import send_voice_to_channel
 from app.utils.time import format_human_time
 
-async def handle_voice(message: types.Message):
+router = Router()
+
+@router.message(F.content_type == ContentType.VOICE)
+async def handle_voice(message: Message):
     user = message.from_user
     user_id = user.id
     username = user.username or "-"
@@ -25,7 +31,6 @@ async def handle_voice(message: types.Message):
     brief_id = session["brief_id"]
     fragment_index = session["last_fragment_index"] + 1
 
-    # Логируем в БД
     await log_voice_fragment(
         user_id=user_id,
         username=username,
@@ -37,7 +42,6 @@ async def handle_voice(message: types.Message):
 
     await increment_fragment_index(user_id)
 
-    # Отправляем в канал
     await send_voice_to_channel(
         user_id=user_id,
         username=username,
@@ -48,6 +52,3 @@ async def handle_voice(message: types.Message):
     )
 
     await message.answer(f"🎧 Фрагмент №{fragment_index} принят. Добавишь ещё?")
-
-def register(dp: Dispatcher):
-    dp.register_message_handler(handle_voice, content_types=types.ContentType.VOICE)
