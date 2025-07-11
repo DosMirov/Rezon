@@ -47,6 +47,9 @@ async def handle_webhook(request):
         logging.error(f"Error in webhook handler: {e}")
     return web.Response(text="OK")
 
+async def handle_health(request):
+    return web.Response(text="OK")
+
 def create_app():
     register_handlers()
     print("main.py dp id:", id(dp))
@@ -54,6 +57,7 @@ def create_app():
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
+    app.router.add_get("/health", handle_health)
     return app
 
 if __name__ == "__main__":
