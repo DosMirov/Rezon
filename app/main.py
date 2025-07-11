@@ -7,9 +7,9 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.utils.exceptions import RetryAfter
 from dotenv import load_dotenv
 
-from app.start import register_handlers
-from app.config import settings
-from app.core.database import init_db
+from start import register_handlers
+from config import settings
+from core.database import init_db
 
 load_dotenv()
 
