@@ -2,13 +2,27 @@ name: Keep Render Awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"  # каждые 10 минут
-  workflow_dispatch:        # можно запустить вручную из интерфейса
+    - cron: '*/5 * * * *'  # Каждые 5 минут
+  workflow_dispatch:
 
 jobs:
-  ping-render:
+  keep-awake:
     runs-on: ubuntu-latest
 
+    env:
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      WEBHOOK_URL: https://rezon-voice-bot.onrender.com/webhook/${{ secrets.TELEGRAM_TOKEN }}
+      HEALTHCHECK_URL: https://rezon-voice-bot.onrender.com/
+
     steps:
-      - name: Curl ping to Render URL
-        run: curl -m 10 --retry 3 ${{ secrets.RENDER_PING_URL }}
+      - name: Curl healthcheck (wake Render)
+        run: |
+          echo "Pinging $HEALTHCHECK_URL..."
+          curl --silent --fail $HEALTHCHECK_URL || echo "Healthcheck ping failed"
+
+      - name: Ensure webhook is set
+        run: |
+          echo "Setting webhook..."
+          curl --silent --fail -X POST https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook \
+            -d url=$WEBHOOK_URL \
+            || echo "Webhook update failed"

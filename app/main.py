@@ -16,17 +16,26 @@ bot = Bot(token=settings.BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 def register_handlers():
-    print("Registering handlers...")
+    logging.info("Registering handlers...")
     start.register(dp)
     voice.register(dp)
     complete.register(dp)
 
 async def on_startup(app):
-    info = await bot.get_webhook_info()
-    if info.url:
-        logging.info(f"Deleting old webhook: {info.url}")
-        await bot.delete_webhook(drop_pending_updates=True)
-    await bot.set_webhook(url=WEBHOOK_URL)
+    logging.info("Running on_startup...")
+
+    await Bot.set_current(bot)  # Ensure bot context is available
+
+    # Always reset webhook
+    try:
+        info = await bot.get_webhook_info()
+        if info.url:
+            logging.info(f"Deleting old webhook: {info.url}")
+            await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        logging.warning(f"Webhook info fetch/delete failed: {e}")
+
+    await bot.set_webhook(WEBHOOK_URL)
     await init_db(settings.DATABASE_PATH)
     logging.info(f"Webhook set to: {WEBHOOK_URL}")
 
@@ -39,25 +48,28 @@ async def handle_webhook(request):
         request_body = await request.text()
         data = json.loads(request_body)
         update = types.Update(**data)
-        # 🧩 Aiogram 2.x context injection
-        bot.set_current(bot)
-        dp.bot.set_current(dp.bot)
+
+        await Bot.set_current(bot)
         await dp.process_update(update)
+
     except Exception as e:
         logging.error(f"Error in webhook handler: {e}")
+
     return web.Response(text="OK")
 
-async def handle_health(request):
-    return web.Response(text="OK")
+async def healthcheck(request):
+    return web.Response(text="pong")
 
 def create_app():
     register_handlers()
-    print("main.py dp id:", id(dp))
+    logging.info(f"main.py dp id: {id(dp)}")
+
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
+    app.router.add_get("/", healthcheck)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/health", handle_health)
+
     return app
 
 if __name__ == "__main__":
