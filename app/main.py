@@ -24,7 +24,7 @@ def register_handlers():
 async def on_startup(app):
     logging.info("Running on_startup...")
 
-    await Bot.set_current(bot)  # Ensure bot context is available
+    Bot.set_current(bot)
 
     # Always reset webhook
     try:
@@ -49,7 +49,7 @@ async def handle_webhook(request):
         data = json.loads(request_body)
         update = types.Update(**data)
 
-        await Bot.set_current(bot)
+        Bot.set_current(bot)
         await dp.process_update(update)
 
     except Exception as e:
