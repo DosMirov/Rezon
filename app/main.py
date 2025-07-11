@@ -24,7 +24,17 @@ def register_handlers():
 async def on_startup(app):
     logging.info("Running on_startup...")
 
+    # set_current - без await
     Bot.set_current(bot)
+    Dispatcher.set_current(dp)
+
+    await init_db(settings.DATABASE_PATH)
+
+    await bot.set_webhook(WEBHOOK_URL)
+    logging.info(f"Webhook set to: {WEBHOOK_URL}")
+
+    info = await bot.get_webhook_info()
+    logging.info(f"Webhook info: pending updates = {info.pending_update_count}")
 
     # Always reset webhook
     try:
@@ -60,6 +70,9 @@ async def handle_webhook(request):
 async def healthcheck(request):
     return web.Response(text="pong")
 
+async def wakeup(request):
+    return web.Response(text="✅ I'm awake", status=200)
+
 def create_app():
     register_handlers()
     logging.info(f"main.py dp id: {id(dp)}")
@@ -69,6 +82,7 @@ def create_app():
     app.router.add_get("/", healthcheck)
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
+    app.router.add_get("/wake", wakeup)
 
     return app
 
