@@ -1,4 +1,4 @@
-import os
+import os, sys
 print(">>> BOT CONTAINER STARTED <<<")
 print("BOT_TOKEN:", os.environ.get("BOT_TOKEN"))
 print("CHANNEL_ID:", os.environ.get("CHANNEL_ID"))
@@ -6,6 +6,8 @@ print("WEBHOOK_URL:", os.environ.get("WEBHOOK_URL"))
 print("WEBHOOK_PATH:", os.environ.get("WEBHOOK_PATH"))
 print("Current directory:", os.getcwd())
 print("Dirlist:", os.listdir("."))
+print("### BOOT ### env:", {k: os.getenv(k) for k in ("BOT_TOKEN","CHANNEL_ID","WEBHOOK_URL","WEBHOOK_PATH")}, file=sys.stderr, flush=True)
+
 
 import logging
 from aiohttp import web
