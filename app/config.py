@@ -1,4 +1,7 @@
-from pydantic import BaseSettings, Field
+# app/config.py
+from pydantic_settings import BaseSettings
+from pydantic import Field
+
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
@@ -15,4 +18,6 @@ class Settings(BaseSettings):
     def WEBHOOK_URL(self) -> str:
         return f"{self.BASE_WEBHOOK_URL.rstrip('/')}{self.WEBHOOK_PATH}"
 
+
+# Singleton instance for global access
 settings = Settings()

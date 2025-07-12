@@ -2,7 +2,7 @@
 app/storage/db.py
 -----------------
 Schema initialization for SQLite.
-Defines `session` and `voice_log` tables with proper constraints.
+Defines `session` and `voice_log` tables with proper constraints, now including text support.
 
 Usage:
     from app.storage.db import init_db
@@ -33,7 +33,15 @@ CREATE TABLE IF NOT EXISTS voice_log (
     first_name TEXT,
     brief_id TEXT NOT NULL,
     fragment_index INTEGER NOT NULL,
-    file_id TEXT NOT NULL,
+    content_type TEXT NOT NULL,          -- 'voice', 'text', 'photo', 'video', etc.
+    file_id TEXT,
+    text TEXT,
+    thumb_file_id TEXT,
+    mime_type TEXT,
+    file_name TEXT,
+    duration INTEGER,
+    width INTEGER,
+    height INTEGER,
     timestamp TEXT NOT NULL
 );
 """
