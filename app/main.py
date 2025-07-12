@@ -1,4 +1,4 @@
-import os, sys
+import os
 print(">>> BOT CONTAINER STARTED <<<")
 print("BOT_TOKEN:", os.environ.get("BOT_TOKEN"))
 print("CHANNEL_ID:", os.environ.get("CHANNEL_ID"))
