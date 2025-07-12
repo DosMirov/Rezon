@@ -1,11 +1,16 @@
-from pydantic_settings import BaseSettings
+# app/config.py
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
-    CHANNEL_ID: int
+    CHANNEL_ID: str
+    WEBHOOK_URL: str = "http://localhost:10000/webhook"
+    WEBHOOK_PATH: str = "/webhook"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file='.env.local',
+        extra='allow',  # Разрешает любые дополнительные env, чтобы не падало из-за них
+    )
 
 settings = Settings()
