@@ -1,0 +1,44 @@
+.
+├── app
+│   ├── bot.py
+│   ├── config.py
+│   ├── core
+│   │   └── brief_manager.py
+│   ├── handlers
+│   │   ├── complete.py
+│   │   ├── register.py
+│   │   ├── start.py
+│   │   └── universal.py
+│   ├── main.py
+│   ├── services
+│   │   └── send_to_channel.py
+│   ├── storage
+│   │   ├── db.py
+│   │   └── repository.py
+│   └── utils
+│       └── time.py
+├── dockerfile
+├── project_tree.txt
+├── README.md
+├── requirements.txt
+└── venv
+    ├── bin
+    │   ├── activate
+    │   ├── activate.csh
+    │   ├── activate.fish
+    │   ├── Activate.ps1
+    │   ├── dotenv
+    │   ├── normalizer
+    │   ├── pip
+    │   ├── pip3
+    │   ├── pip3.11
+    │   ├── python -> python3.11
+    │   ├── python3 -> python3.11
+    │   └── python3.11 -> /Users/dosmirov/.pyenv/versions/3.11.8/bin/python3.11
+    ├── include
+    │   └── python3.11
+    ├── lib
+    │   └── python3.11
+    └── pyvenv.cfg
+
+13 directories, 29 files
