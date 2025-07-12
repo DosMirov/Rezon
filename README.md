@@ -1,94 +1,100 @@
-# Rezon | Voice Brief Intake Bot
+# Rezon Voice Bot
 
-Telegram-бот, который регистрирует голосовые фрагменты пользователя как архитектурные кейсы.  
-Каждый голос — фрагмент Brief-ID, логируется в SQLite, отправляется в канал и формирует платформенный след.
+Telegram bot for collecting voice fragments from users and forwarding them to an admin channel.
 
----
+## 🚀 Features
 
-## 🚀 Цель
+- `/start` — begins a new “brief” session and returns Brief-ID.
+- Voice messages are logged atomically (fragment index + metadata).
+- `/done` or “Завершить” button — closes the session.
+- Stored in SQLite; can be swapped to Supabase/Firebase later.
+- Minimalist UX; metadata tags added to each forwarded fragment.
 
-> Создать фундаментальную инфраструктуру сбора, маркировки и передачи голосовых фрагментов как выразительных кейсов.
+## 📁 Project Structure
 
----
+```
 
-## 📦 Функции MVP
+.
+├── app
+│   ├── bot.py                # singleton Bot and Dispatcher
+│   ├── config.py             # Pydantic settings loader
+│   ├── main.py               # aiohttp webhook server (entrypoint)
+│   ├── handlers              # user-flow routers
+│   │   ├── register.py
+│   │   ├── start.py
+│   │   ├── voice.py
+│   │   └── complete.py
+│   ├── services
+│   │   └── send\_to\_channel.py
+│   ├── storage
+│   │   ├── db.py             # schema init
+│   │   └── repository.py     # atomic data layer
+│   └── utils
+│       └── time.py           # timestamp helpers
+├── Dockerfile
+├── requirements.txt
+├── runtime.txt               # (can be removed if unused)
+└── .env.sample
 
-- `/start` — инициализация сессии и Brief-ID
-- Приём голосовых → логирование и маркировка (#теги)
-- Отправка сообщений в канал с метаданными
-- `/done` или кнопка “Завершить” → фиксация и закрытие кейса
-- Хранение в SQLite
-- Поддержка Render-хостинга
+````
 
----
+## 🔧 Getting Started
 
-## 🧱 Структура проекта
+1. **Clone repository**  
+   ```bash
+   git clone https://github.com/your/repo.git
+   cd repo
+````
 
-app/
-├── main.py                  # запуск
-├── bot.py                   # регистрация маршрутов
-├── config.py                # .env loader
-├── handlers/                # /start, voice, /done
-├── core/                    # логика brief_id, session dataclass
-├── services/                # отправка в канал
-├── storage/                 # SQLite: schema + repository
-└── utils/                   # time utils
+2. **Create virtual environment & install deps**
 
----
+   ```bash
+   python3.11 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-## 🛠 Переменные окружения (`.env`)
+3. **Configure**
 
-Создай `.env` или используй `.env.template`:
+   * Copy `.env.sample` → `.env`
+   * Fill in `BOT_TOKEN`, `CHANNEL_ID`, `BASE_WEBHOOK_URL`, etc.
 
-```env
-BOT_TOKEN=your_telegram_bot_token_here
-CHANNEL_ID=-1002699150650
-DATABASE_PATH=./rezon.db
+4. **Initialize database**
+   (Handled automatically on startup)
 
+5. **Run locally**
 
-⸻
+   ```bash
+   # for webhook mode, expose via ngrok or similar:
+   ngrok http 10000
+   # set NGROK_URL and WEBHOOK_PATH in .env
+   python -m app.main
+   ```
 
-▶️ Локальный запуск
+6. **Deploy with Docker**
 
-# Установить зависимости
-pip install -r requirements.txt
+   ```bash
+   docker build -t rezon-voice-bot .
+   docker run -e BOT_TOKEN=… \
+              -e CHANNEL_ID=… \
+              -e BASE_WEBHOOK_URL=… \
+              -e WEBHOOK_PATH=/webhook \
+              -e DATABASE_PATH=./rezon.db \
+              -p 10000:10000 \
+              rezon-voice-bot
+   ```
 
-# Запустить бота
-python app/main.py
+7. **Zeabur Deployment**
 
+   * Push to repo; set env vars in Zeabur dashboard.
+   * Ensure `PORT=10000` is set.
+   * Verify `/health` or `/` returns “Bot is up.”
+   * In Telegram, call `getWebhookInfo` to confirm webhook URL.
 
-⸻
+## 🛠️ Future Improvements
 
-🌐 Деплой на Render
-	1.	Зайди в https://render.com
-	2.	Создай новый Web Service → Python
-	3.	Укажи команду запуска:
+* Swap `MemoryStorage` → `RedisStorage` for horizontal scaling.
+* Add FastAPI-based admin panel for exporting sessions.
+* Move `send_to_channel` to background queue with retries.
+* Integrate Supabase/Firebase for long-term storage.
 
-python app/main.py
-
-
-	4.	Установи переменные окружения через UI:
-	•	BOT_TOKEN
-	•	CHANNEL_ID
-	•	DATABASE_PATH → ./rezon.db
-	5.	Убедись, что бот добавлен в канал как администратор.
-
-⸻
-
-🔜 Возможности расширения
-	•	Расшифровка голосов (Whisper API)
-	•	Архивация кейсов в PDF/Notion
-	•	GPT-анализ с тегированием
-	•	Интерфейс модерации
-	•	Система оплаты за разбор
-
-⸻
-
-🧠 Принцип
-
-“Бот — это не чат, а контейнер смыслов.
-Он не симулирует — он фиксирует.”
-
-⸻
-
-© 2025 Rezon Systems
