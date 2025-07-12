@@ -1,7 +1,8 @@
-# .dockerignore
+venv
 .git
 __pycache__/
 *.pyc
-venv
+*.pyo
+*.pyd
 .DS_Store
 .env*

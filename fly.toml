@@ -1,0 +1,17 @@
+app = "rezon"
+primary_region = "waw"
+
+[build]
+
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = false    # держим машину всегда online для Telegram webhook
+  auto_start_machines = true
+  min_machines_running = 1      # одна машина всегда работает
+  processes = ["app"]
+
+[[vm]]
+  memory = "256mb"              # минимум для Python + aiogram + aiohttp
+  cpu_kind = "shared"
+  cpus = 1

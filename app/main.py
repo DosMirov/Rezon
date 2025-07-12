@@ -1,4 +1,5 @@
 import os
+import sys
 print(">>> BOT CONTAINER STARTED <<<")
 print("BOT_TOKEN:", os.environ.get("BOT_TOKEN"))
 print("CHANNEL_ID:", os.environ.get("CHANNEL_ID"))
@@ -39,7 +40,6 @@ async def on_shutdown(app: web.Application):
     await bot.delete_webhook()
     await bot.session.close()
     await dp.storage.close()
-    await dp.storage.wait_closed()
 
 def create_app() -> web.Application:
     app = web.Application()
