@@ -1,4 +1,12 @@
 import os
+print(">>> BOT CONTAINER STARTED <<<")
+print("BOT_TOKEN:", os.environ.get("BOT_TOKEN"))
+print("CHANNEL_ID:", os.environ.get("CHANNEL_ID"))
+print("WEBHOOK_URL:", os.environ.get("WEBHOOK_URL"))
+print("WEBHOOK_PATH:", os.environ.get("WEBHOOK_PATH"))
+print("Current directory:", os.getcwd())
+print("Dirlist:", os.listdir("."))
+
 import logging
 from aiohttp import web
 from aiogram import Dispatcher
@@ -41,4 +49,5 @@ def create_app() -> web.Application:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
+    print(">>> Ready to run aiohttp web app <<<")
     web.run_app(create_app(), host="0.0.0.0", port=port)
