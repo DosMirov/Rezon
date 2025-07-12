@@ -1,6 +1,5 @@
 import logging
 from aiogram.exceptions import TelegramBadRequest
-
 from app.bot import bot
 from app.config import settings
 
@@ -10,14 +9,13 @@ async def send_media_to_channel(
     user_id: int,
     username: str,
     brief_id: str,
-    fragment_index: int,
     content_type: str,
     file_id: str = None,
     text: str = None,
     timestamp: str = None
 ) -> None:
     mention = f"@{username}" if username and username != "-" else f"ID:{user_id}"
-    tags = f"#brief_{brief_id} #user_{user_id} #v{fragment_index}"
+    tags = f"#brief_{brief_id} #user_{user_id}"
 
     meta_text = (
         f"🧷 Новый фрагмент (<b>{content_type}</b>):\n"
@@ -25,7 +23,6 @@ async def send_media_to_channel(
         f"👤 {mention}\n"
         f"🗓 {timestamp}\n"
         f"📁 Brief-ID: <code>{brief_id}</code>\n"
-        f"🔢 №{fragment_index}\n"
         f"{tags}\n"
     )
 
@@ -53,6 +50,6 @@ async def send_media_to_channel(
         else:
             await bot.send_message(settings.CHANNEL_ID, meta_text + "\n❔ Неизвестный тип.", parse_mode="HTML")
     except TelegramBadRequest as e:
-        logger.error("Failed to send fragment %s for brief %s: %s", fragment_index, brief_id, e)
+        logger.error("Failed to send fragment for brief %s: %s", brief_id, e)
     except Exception:
-        logger.exception("Unexpected error while sending fragment %s for brief %s", fragment_index, brief_id)
+        logger.exception("Unexpected error while sending fragment for brief %s", brief_id)

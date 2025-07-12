@@ -17,11 +17,19 @@ DB_PATH = settings.DATABASE_PATH
 
 async def create_session(user_id: int, brief_id: str) -> None:
     async with aiosqlite.connect(DB_PATH) as db:
+        # 1. Завершить все прошлые активные сессии (status = 'done')
         await db.execute("""
-            INSERT OR REPLACE INTO session (user_id, brief_id, last_fragment_index, started_at, status)
+            UPDATE session
+               SET status = 'done'
+             WHERE user_id = ? AND status = 'active'
+        """, (user_id,))
+        # 2. Создать новую активную сессию
+        await db.execute("""
+            INSERT INTO session (user_id, brief_id, last_fragment_index, started_at, status)
             VALUES (?, ?, ?, ?, ?)
         """, (user_id, brief_id, 0, get_timestamp(), 'active'))
         await db.commit()
+
 
 
 async def get_active_session(user_id: int) -> Optional[Dict[str, int]]:
