@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.types import Message
 from app.services.send_to_channel import send_media_to_channel
 from app.utils.time import get_daystamp, format_human_time
+from app.session import get_session, append_fragment  # 👈 RAM FSM session API
 
 router = Router()
 
@@ -38,6 +39,17 @@ async def handle_any_content(message: Message):
         await message.answer("❔ Не могу обработать этот тип файла.")
         return
 
+    # --- RAM FSM: сохраняем фрагмент в RAM-сессию пользователя ---
+    frag = {
+        "content_type": ct,
+        "file_id": file_id,
+        "text": text,
+        "timestamp": timestamp,
+    }
+    session = get_session(user_id)
+    append_fragment(user_id, frag)    # 👈 здесь просто session["fragments"].append(frag)
+
+    # --- Отправка в канал (только как архив/лог, не основной storage) ---
     await send_media_to_channel(
         user_id=user_id,
         username=username,
@@ -49,3 +61,4 @@ async def handle_any_content(message: Message):
     )
 
     await message.answer(f"✅ {ct.capitalize()} зафиксирован. Добавишь ещё?")
+

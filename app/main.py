@@ -17,13 +17,18 @@ print("WEBHOOK_URL:", os.environ.get("WEBHOOK_URL"))
 print("WEBHOOK_PATH:", os.environ.get("WEBHOOK_PATH"))
 print("Current directory:", os.getcwd())
 print("Dirlist:", os.listdir("."))
-print("### BOOT ### env:", {k: os.getenv(k) for k in ("BOT_TOKEN", "CHANNEL_ID", "WEBHOOK_URL", "WEBHOOK_PATH")}, file=sys.stderr, flush=True)
+print(
+    "### BOOT ### env:",
+    {k: os.getenv(k) for k in ("BOT_TOKEN", "CHANNEL_ID", "WEBHOOK_URL", "WEBHOOK_PATH")},
+    file=sys.stderr,
+    flush=True
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 dp = Dispatcher(storage=MemoryStorage())
-register_routers(dp)  # <-- Весь import/регистрация — ТОЛЬКО тут!
+register_routers(dp)  # <-- Все роутеры включаются через register_routers
 
 async def on_startup(app: web.Application):
     logger.info("🚀 Starting Rezon Stateless Bot…")
@@ -44,7 +49,10 @@ async def on_shutdown(app: web.Application):
 
 def create_app() -> web.Application:
     app = web.Application()
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=os.environ["WEBHOOK_PATH"])
+    SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot
+    ).register(app, path=os.environ["WEBHOOK_PATH"])
     app.router.add_get("/", lambda _: web.Response(text="🤖 Bot is up."))
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
@@ -54,5 +62,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     print(">>> Ready to run aiohttp web app <<<")
     web.run_app(create_app(), host="0.0.0.0", port=port)
-
-# ⛔️ Ничего ниже!  
